@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Agendamentos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="bg-white p-6 rounded-2xl shadow-lg max-w-xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4 text-center">Agendamentos</h1>
+    <ul class="divide-y divide-gray-200">
+      {% for nome, data, horario in agendamentos %}
+        <li class="py-2">
+          <span class="font-semibold">{{nome}}</span> - 
+          {{data}} às {{horario}}
+        </li>
+      {% endfor %}
+    </ul>
+    <a href="/" class="block text-center mt-4 text-blue-600 hover:underline">
+      Voltar
+    </a>
+  </div>
+</body>
+</html>

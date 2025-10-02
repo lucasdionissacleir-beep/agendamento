@@ -1,0 +1,60 @@
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+import sqlite3
+from datetime import datetime, timedelta
+
+app = FastAPI(title="Agendamento Barbearia")
+
+templates = Jinja2Templates(directory="templates")
+
+# Criar banco
+def criar_db():
+    conn = sqlite3.connect("barbearia.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agendamentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT,
+            data TEXT,
+            horario TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+criar_db()
+
+# Função gerar horários
+def gerar_horarios():
+    inicio = datetime.strptime("10:00", "%H:%M")
+    fim = datetime.strptime("18:00", "%H:%M")
+    horarios = []
+    while inicio <= fim:
+        horarios.append(inicio.strftime("%H:%M"))
+        inicio += timedelta(minutes=30)
+    return horarios
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    horarios = gerar_horarios()
+    return templates.TemplateResponse("index.html", {"request": request, "horarios": horarios})
+
+@app.post("/agendar")
+def agendar(nome: str = Form(...), data: str = Form(...), horario: str = Form(...)):
+    conn = sqlite3.connect("barbearia.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO agendamentos (nome, data, horario) VALUES (?, ?, ?)",
+                   (nome, data, horario))
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/", status_code=303)
+
+@app.get("/agendamentos", response_class=HTMLResponse)
+def listar(request: Request):
+    conn = sqlite3.connect("barbearia.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT nome, data, horario FROM agendamentos ORDER BY data, horario")
+    agendamentos = cursor.fetchall()
+    conn.close()
+    return templates.TemplateResponse("lista.html", {"request": request, "agendamentos": agendamentos})
